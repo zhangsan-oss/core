@@ -1,41 +1,10 @@
-image:
-  name: node:24-alpine
-
-
-stages:
-  - docs
-
-
-pages:
-
-  stage: docs
-
-  tags:
-    - docker
-
-
-  before_script:
-
-    # VitePress 需要 git 获取更新时间
-    - apk add --no-cache git
-
-    # 启用 pnpm
-    - corepack enable
-
-
-  script:
-
-    # 安装依赖
-    - pnpm install --frozen-lockfile
-
-    # 构建文档
-    - pnpm docs:build
-
-    # GitLab Pages 要求目录名必须是 public
-    - mv docs/.vitepress/dist public
-
-
-  artifacts:
-
-    paths:
-      - public
+# The Docker image that will be used to build your app
+image: node:24-alpine
+create-pages:
+  pages:
+    # The folder that contains the files to be exposed at the Page URL
+    publish: public
+  rules:
+    # This ensures that only pushes to the default branch will trigger
+    # a pages deploy
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
