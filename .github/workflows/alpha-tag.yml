@@ -1,0 +1,78 @@
+# 工作流在 GitHub Actions 页面显示的名称
+name: Create alpha tag
+
+# 监听 Pull Request 的关闭事件
+on:
+  pull_request:
+    # 只在 Pull Request 关闭时检查是否已合并
+    types:
+      - closed
+    # 只监听目标为 main 的 Pull Request
+    branches:
+      - main
+
+# 为工作流声明 GITHUB_TOKEN 权限
+permissions:
+  # 允许读取代码并推送新 Tag
+  contents: write
+
+# 定义工作流中的任务集合
+jobs:
+  # 自动创建 alpha 版本 Tag
+  tag:
+    # 只有 Pull Request 确实合并时执行
+    if: github.event.pull_request.merged == true
+    # 使用 GitHub 提供的 Ubuntu 云端 Runner
+    runs-on: ubuntu-latest
+
+    # 定义任务要按顺序执行的步骤
+    steps:
+      # 检出合并后的提交，而不是 Pull Request 合并前的代码
+      - name: Checkout merge commit
+        # 使用官方 Checkout Action
+        uses: actions/checkout@v5
+        # 配置 Checkout 参数
+        with:
+          # 检出本次 Pull Request 生成的合并提交
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          # 拉取完整历史和已有 Tag，便于计算下一个编号
+          fetch-depth: 0
+
+      # 根据 package.json 版本创建下一个 alpha Tag
+      - name: Create and push alpha tag
+        # 使用 Bash 执行 Tag 创建脚本
+        shell: bash
+        run: |
+          # 读取 npm 包当前版本，例如 0.0.1
+          PACKAGE_VERSION="$(node -p "require('./packages/utils/package.json').version")"
+          # 定义 alpha Tag 前缀，例如 v0.0.1-alpha.
+          TAG_PREFIX="v${PACKAGE_VERSION}-alpha."
+          # 从 1 开始寻找尚未使用的 alpha 序号
+          NEXT_NUMBER=1
+
+          # 确保本地包含远程仓库中的所有 Tag
+          git fetch --force --tags origin
+
+          # 找出当前版本已有的 alpha Tag，并计算最大序号加一
+          while IFS= read -r tag; do
+            # 取出 Tag 前缀后的数字部分
+            number="${tag#${TAG_PREFIX}}"
+            # 只处理纯数字序号
+            if [[ "$number" =~ ^[0-9]+$ ]] && (( number >= NEXT_NUMBER )); then
+              NEXT_NUMBER=$((number + 1))
+            fi
+          done < <(git tag -l "${TAG_PREFIX}*")
+
+          # 拼出新的 alpha Tag，例如 v0.0.1-alpha.1
+          ALPHA_TAG="${TAG_PREFIX}${NEXT_NUMBER}"
+
+          # 配置自动提交 Tag 时使用的 Git 身份
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # 创建带说明的 Tag 并推送到远程仓库
+          git tag -a "$ALPHA_TAG" -m "test: $ALPHA_TAG"
+          git push origin "$ALPHA_TAG"
+
+          # 在 Actions 日志中输出创建结果
+          echo "Created alpha tag: $ALPHA_TAG"

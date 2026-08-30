@@ -3,8 +3,9 @@ name: CI
 
 # 定义什么时候触发这个工作流
 on:
-  # 分支推送时触发，用于验证分支代码；Tag 由 release 工作流负责
+  # 分支推送时触发，Tag 由 release.yml 负责
   push:
+    # 匹配所有分支，不匹配 Tag
     branches:
       - '**'
   # 创建或更新指向 main 的 Pull Request 时触发
@@ -20,13 +21,6 @@ permissions:
   # 允许读取仓库代码
   contents: read
 
-# 控制同一工作流并发运行时的行为
-concurrency:
-  # 为 CI 使用固定的并发组名称
-  group: github-pages
-  # 新运行开始时取消仍在运行的旧运行
-  cancel-in-progress: true
-
 # 定义工作流中的任务集合
 jobs:
   # 验证代码、构建包和生成文档
@@ -38,14 +32,14 @@ jobs:
     steps:
       # 将当前仓库代码下载到 Runner
       - name: Checkout
-        # 使用官方 Checkout Action，v5 使用 Node.js 24 运行
+        # 使用官方 Checkout Action
         uses: actions/checkout@v5
 
       # 安装 pnpm 包管理器
       - name: Setup pnpm
         # 使用 pnpm 官方 Action
         uses: pnpm/action-setup@v4
-        # 配置 Action 的参数
+        # 配置 pnpm 版本
         with:
           # 使用项目 package.json 中指定的 pnpm 版本
           version: 11.24.0
@@ -54,11 +48,11 @@ jobs:
       - name: Setup Node.js
         # 使用 GitHub 官方 Node.js 配置 Action
         uses: actions/setup-node@v5
-        # 配置 Node.js Action 的参数
+        # 配置 Node.js 版本和 pnpm 缓存
         with:
           # 指定 Node.js 主版本
           node-version: 24
-          # 启用 pnpm 依赖缓存，加快后续运行
+          # 启用 pnpm 依赖缓存
           cache: pnpm
 
       # 安装项目依赖
@@ -68,10 +62,10 @@ jobs:
 
       # 检查 TypeScript 语法和类型
       - name: Type check
-        # 运行 packages/utils 的 tsc --noEmit，不生成文件
+        # 不生成文件，只执行类型检查
         run: pnpm typecheck
 
-      # 执行 packages/utils 中的单元测试
+      # 执行单元测试
       - name: Run tests
         # 调用根 package.json 中的 test 脚本
         run: pnpm test
@@ -90,76 +84,13 @@ jobs:
           # 当前仓库名会对应 GitHub Pages 的项目子路径
           CI_PAGES_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
 
-      # 保存文档构建结果，供 main 分支的部署任务使用
+      # 保存文档构建结果供检查使用
       - name: Upload documentation artifact
         # 使用 GitHub 官方通用产物上传 Action
         uses: actions/upload-artifact@v4
         # 配置产物名称和目录
         with:
-          # 产物名称，部署任务会按此名称下载
+          # 产物名称
           name: vitepress-docs
           # VitePress 生成的静态网站目录
           path: docs/.vitepress/dist
-
-  # 只负责将文档发布到 GitHub Pages
-  deploy:
-    # 验证任务成功后才允许部署
-    needs: verify
-    # 只有 main 分支的推送才部署，功能分支和 Pull Request 不部署
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    # 使用 GitHub 提供的 Ubuntu 云端 Runner
-    runs-on: ubuntu-latest
-
-    # 为 Pages 部署任务声明所需权限
-    permissions:
-      # 允许读取仓库元数据和工作流产物
-      contents: read
-      # 允许上传和发布 GitHub Pages
-      pages: write
-      # 允许 Pages 使用 OIDC 身份令牌完成部署
-      id-token: write
-
-    # 只有这个任务申请 github-pages 环境，避免功能分支触发环境保护
-    environment:
-      # 环境名称，部署保护规则只作用于正式部署
-      name: github-pages
-      # 部署成功后在环境页面显示实际站点地址
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    # 定义部署任务要按顺序执行的步骤
-    steps:
-      # 下载验证任务生成的文档产物
-      - name: Download documentation artifact
-        # 使用 GitHub 官方通用产物下载 Action
-        uses: actions/download-artifact@v4
-        # 配置下载的产物名称和目标目录
-        with:
-          # 必须与验证任务上传的名称一致
-          name: vitepress-docs
-          # 下载到当前 Runner 的 docs-dist 目录
-          path: docs-dist
-
-      # 初始化或检查 GitHub Pages 配置
-      - name: Configure GitHub Pages
-        # 使用 GitHub 官方 Pages 配置 Action
-        uses: actions/configure-pages@v5
-        # 配置 Action 的参数
-        with:
-          # 如果仓库尚未启用 Pages，则尝试自动启用
-          enablement: true
-
-      # 把构建后的文档目录上传为 Pages 专用产物
-      - name: Upload Pages artifact
-        # 使用 GitHub Pages 官方产物上传 Action
-        uses: actions/upload-pages-artifact@v3
-        # 配置需要上传的目录
-        with:
-          # 下载后的 VitePress 静态网站目录
-          path: docs-dist
-
-      # 将 Pages 产物发布到 GitHub Pages
-      - name: Deploy to GitHub Pages
-        # 给这一步命名，供 environment.url 引用部署地址
-        id: deployment
-        # 使用 GitHub 官方 Pages 部署 Action
-        uses: actions/deploy-pages@v4
