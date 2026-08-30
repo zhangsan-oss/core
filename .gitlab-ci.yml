@@ -1,41 +1,10 @@
-image:
-  node:24
+stages:
+  - test
 
-
-pages:
-
-  stage: deploy
-
+test-job:
+  stage: test
   tags:
     - docker
-
-
   script:
-
-    # 安装 pnpm
-    - corepack enable
-    - corepack prepare pnpm@latest --activate
-
-
-    # 安装依赖
-    - pnpm install --frozen-lockfile
-
-
-    # 构建文档
-    - pnpm docs:build
-
-
-    # GitLab Pages需要public目录
-    - mv docs/.vitepress/dist public
-
-
-
-  artifacts:
-
-    paths:
-      - public
-
-
-
-  only:
-    - master
+    - echo "Hello GitLab CI"
+    - echo "CI Running"
