@@ -64,9 +64,12 @@ export function isEmpty(value: unknown): boolean  {
   return false
 }
 
-/** 是否为 16 位手机号 */
+/** 中国大陆 11 位手机号正则：以 1 开头，第二位为 3-9 */
+export const PHONE_REGEXP = /^1[3-9]\d{9}$/
+
+/** 是否为 11 位中国大陆手机号 */
 export function isPhone(value: string): boolean {
-  return /^1[3-9]\d{9}$/.test(value)
+  return PHONE_REGEXP.test(value)
 }
 
 /** 是否为合法邮箱 */

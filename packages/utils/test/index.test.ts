@@ -4,6 +4,7 @@ import {
   isNumber,
   isNil,
   isEmpty,
+  PHONE_REGEXP,
   isPhone,
   isEmail,
   isUrl,
@@ -37,6 +38,10 @@ describe('type 类型判断', () => {
   it('isPhone / isEmail / isUrl', () => {
     expect(isPhone('13800138000')).toBe(true)
     expect(isPhone('123456')).toBe(false)
+    expect(isPhone('138001380000')).toBe(false)
+    expect(isPhone('12800138000')).toBe(false)
+    expect(PHONE_REGEXP.test('13912345678')).toBe(true)
+    expect(PHONE_REGEXP.test(' 13912345678')).toBe(false)
     expect(isEmail('a@b.com')).toBe(true)
     expect(isEmail('not-email')).toBe(false)
     expect(isUrl('https://example.com')).toBe(true)

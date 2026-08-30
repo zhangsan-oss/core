@@ -144,13 +144,21 @@ isEmpty(0)           // false
 
 判断是否为 11 位大陆手机号。
 
+可直接使用 `PHONE_REGEXP` 作为表单校验规则。
+
+```ts
+const PHONE_REGEXP = /^1[3-9]\d{9}$/
+```
+
 ```ts
 isPhone(value: string): boolean
+PHONE_REGEXP: RegExp
 ```
 
 ```ts
 isPhone('13800138000') // true
 isPhone('12345')       // false
+PHONE_REGEXP.test('13912345678') // true
 ```
 
 ## isEmail
