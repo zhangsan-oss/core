@@ -1,3 +1,7 @@
+image:
+  name: node:24-alpine
+
+
 stages:
   - docs
 
@@ -10,18 +14,26 @@ docs-build:
     - docker
 
 
-  script:
+  before_script:
 
-    - echo "start docs"
+    # Alpine 安装 git，VitePress 构建需要
+    - apk add --no-cache git
 
-    - node --version
-
-    - npm --version
-
+    # 开启 pnpm
     - corepack enable
 
+
+  script:
+
+    # 环境检查
+    - node --version
+    - npm --version
     - pnpm --version
 
+
+    # 安装 monorepo 依赖
     - pnpm install --frozen-lockfile
 
+
+    # 构建 VitePress
     - pnpm docs:build
