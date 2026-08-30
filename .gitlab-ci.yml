@@ -17,3 +17,5 @@ docs-build:
     - corepack enable
 
     - pnpm -v
+
+    - node -v
