@@ -6,7 +6,7 @@ stages:
   - docs
 
 
-docs-build:
+pages:
 
   stage: docs
 
@@ -16,24 +16,26 @@ docs-build:
 
   before_script:
 
-    # Alpine 安装 git，VitePress 构建需要
+    # VitePress 需要 git 获取更新时间
     - apk add --no-cache git
 
-    # 开启 pnpm
+    # 启用 pnpm
     - corepack enable
 
 
   script:
 
-    # 环境检查
-    - node --version
-    - npm --version
-    - pnpm --version
-
-
-    # 安装 monorepo 依赖
+    # 安装依赖
     - pnpm install --frozen-lockfile
 
-
-    # 构建 VitePress
+    # 构建文档
     - pnpm docs:build
+
+    # GitLab Pages 要求目录名必须是 public
+    - mv docs/.vitepress/dist public
+
+
+  artifacts:
+
+    paths:
+      - public
