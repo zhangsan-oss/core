@@ -1,0 +1,8 @@
+stages:
+  - test
+
+test-job:
+  stage: test
+  script:
+    - echo "Hello GitLab CI"
+    - echo "CI Running"
