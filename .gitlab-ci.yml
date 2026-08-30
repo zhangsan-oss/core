@@ -3,6 +3,8 @@ stages:
 
 test-job:
   stage: test
+  tags:
+    - docker
   script:
     - echo "Hello GitLab CI"
     - echo "CI Running"
