@@ -5,3 +5,6 @@ dist/
 .vite/
 coverage/
 .temp/
+# VitePress 依赖预构建缓存与构建产物
+**/.vitepress/cache/
+**/.vitepress/dist/

@@ -6,10 +6,16 @@
   "scripts": {
     "build": "pnpm -r --filter @core/utils build",
     "test": "pnpm -r --filter @core/utils test",
-    "publish:utils": "pnpm --filter @core/utils publish"
+    "publish:utils": "pnpm --filter @core/utils publish",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "engines": {
     "node": ">=18"
   },
-  "packageManager": "pnpm@11.24.0"
+  "packageManager": "pnpm@11.24.0",
+  "devDependencies": {
+    "vitepress": "^1.6.4"
+  }
 }
