@@ -84,9 +84,8 @@ npm login
 ### 第三步：发布
 
 ```bash
-pnpm build                  # 构建产物
-cd packages/utils
-npm publish                 # 或从根目录执行 pnpm publish:utils
+pnpm publish:utils   # 发布 @core/utils（prepublishOnly 会自动先构建）
+pnpm release         # 或一键发布：构建 + 发布
 ```
 
 发布成功后，任何人即可安装使用：
@@ -97,14 +96,15 @@ npm install @core/utils
 
 ### 版本更新
 
-修改版本号后再次发布：
+从根目录执行版本脚本，只修改版本号，不自动提交 git：
 
 ```bash
-npm version patch   # 补丁版本 0.0.1 -> 0.0.2
-npm version minor   # 次版本 0.0.1 -> 0.1.0
-npm version major   # 主版本 0.0.1 -> 1.0.0
-npm publish
+pnpm version:patch   # 补丁版本 0.0.1 -> 0.0.2
+pnpm version:minor   # 次版本 0.0.1 -> 0.1.0
+pnpm version:major   # 主版本 0.0.1 -> 1.0.0
 ```
+
+修改版本号后执行 `pnpm release` 即可发布新版本。
 
 ### 包内容说明
 
