@@ -21,3 +21,5 @@ docs-build:
     - corepack enable
 
     - pnpm --version
+
+    - pnpm install --frozen-lockfile
