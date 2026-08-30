@@ -14,8 +14,10 @@ docs-build:
 
     - echo "start docs"
 
+    - node --version
+
+    - npm --version
+
     - corepack enable
 
-    - pnpm -v
-
-    - node -v
+    - pnpm --version
