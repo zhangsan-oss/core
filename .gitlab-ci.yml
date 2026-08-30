@@ -8,3 +8,4 @@ test-job:
   script:
     - echo "Hello GitLab CI"
     - echo "CI Running"
+    - echo "CI DONE"
