@@ -3,8 +3,10 @@ name: CI
 
 # 定义什么时候触发这个工作流
 on:
-  # 任意分支推送时触发，用于验证分支代码
+  # 分支推送时触发，用于验证分支代码；Tag 由 release 工作流负责
   push:
+    branches:
+      - '**'
   # 创建或更新指向 main 的 Pull Request 时触发
   pull_request:
     # 只监听目标为 main 的 Pull Request
