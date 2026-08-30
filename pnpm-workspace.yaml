@@ -1,0 +1,6 @@
+packages:
+  - 'packages/*'
+
+# 允许 esbuild 执行 postinstall 脚本（vite 的依赖，用于安装平台二进制）
+allowBuilds:
+  esbuild: true

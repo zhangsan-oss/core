@@ -1,93 +1,141 @@
-# core
+# core-utils
 
+前端纯函数工具库，零依赖、跨端通用，基于 pnpm Monorepo + Vite + TypeScript 构建，可发布到 npm 供 web、App、小程序等任意前端项目使用。
 
-
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## 目录结构
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/sunnyhappyevery/core.git
-git branch -M main
-git push -uf origin main
+.
+├── packages/
+│   └── utils/            # 工具库子包，发布到 npm 的就是它
+│       ├── src/
+│       │   ├── index.ts  # 总入口，汇总导出
+│       │   ├── type/     # 类型判断
+│       │   ├── string/   # 字符串处理
+│       │   ├── array/    # 数组工具
+│       │   ├── object/   # 对象工具
+│       │   ├── number/   # 数字处理
+│       │   ├── date/     # 日期时间
+│       │   └── function/ # 防抖、节流、记忆化
+│       └── test/         # Vitest 单元测试
+├── pnpm-workspace.yaml   # Monorepo 工作区声明
+└── tsconfig.base.json    # 共享 TS 配置
 ```
 
-## Integrate with your tools
+工具库的实际使用方，如同级目录下的 react-repo 项目，通过本地依赖方式安装使用，模拟真实安装后的效果。
 
-* [Set up project integrations](https://gitlab.com/sunnyhappyevery/core/-/settings/integrations)
+## 使用方式
 
-## Collaborate with your team
+安装后按需引入：
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+```ts
+import { isPhone, chunk, deepClone } from '@core/utils'
 
-## Test and Deploy
+isPhone('13800138000')          // true
+chunk([1, 2, 3, 4, 5], 2)       // [[1, 2], [3, 4], [5]]
+deepClone({ a: { b: 1 } })      // 深拷贝
+```
 
-Use the built-in continuous integration in GitLab.
+所有函数均为纯函数：不修改入参、不依赖 DOM / BOM / Node API、无运行时依赖，因此：
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+- web 项目可直接使用
+- App 项目，如 React Native、Flutter WebView 可直接使用
+- 小程序，如微信、支付宝、Taro、uni-app 可直接使用
+- Node.js 服务端也可使用
 
-***
+## 本地开发
 
-# Editing this README
+```bash
+pnpm install        # 安装依赖
+pnpm build          # 构建工具库，输出 ESM / CJS / UMD 三种格式
+pnpm test           # 运行单元测试
+```
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+本地联调：在 react-repo 中安装本地包并启动开发服务器，可实时验证工具库效果：
 
-## Suggestions for a good README
+```bash
+pnpm build                                  # 先构建 @core/utils
+cd ../react-repo
+pnpm install                                # 安装依赖，链接本地 @core/utils
+pnpm dev                                    # 启动联调页面 http://localhost:5173
+```
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+注意：`@core/utils` 的源码改动后，需重新执行 `pnpm build` 才能在 react-repo 中生效。
 
-## Name
-Choose a self-explaining name for your project.
+## 发布到 npm
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+### 第一步：改包名
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+发布前将 [packages/utils/package.json](packages/utils/package.json) 中的 `name` 改为你的包名：
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+- 普通包名，如 `my-utils`
+- 或 scoped 包名，如 `@your-scope/utils`，需要先确认 scope 在 npm 上未被占用
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+包名在 npm 上全局唯一，可先用 `npm view <包名>` 检查是否已被占用。
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+### 第二步：登录 npm
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+```bash
+npm login
+```
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+按提示输入用户名、密码和邮箱。未注册的先到 https://www.npmjs.com 注册。
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+### 第三步：发布
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+```bash
+pnpm build                  # 构建产物
+cd packages/utils
+npm publish                 # 或从根目录执行 pnpm publish:utils
+```
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+发布成功后，任何人即可安装使用：
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+```bash
+npm install @core/utils
+```
 
-## License
-For open source projects, say how it is licensed.
+### 版本更新
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+修改版本号后再次发布：
+
+```bash
+npm version patch   # 补丁版本 0.0.1 -> 0.0.2
+npm version minor   # 次版本 0.0.1 -> 0.1.0
+npm version major   # 主版本 0.0.1 -> 1.0.0
+npm publish
+```
+
+### 包内容说明
+
+package.json 关键字段：
+
+| 字段 | 作用 |
+| --- | --- |
+| `exports` | 现代导入入口，区分 ESM 和 CJS，条件按顺序匹配 |
+| `main` / `module` | 兼容不支持 exports 字段的旧工具链 |
+| `types` | TypeScript 类型声明入口 |
+| `files` | 发布到 npm 的文件白名单，只发 dist 目录 |
+| `sideEffects: false` | 告诉打包器可以安全 tree-shaking，未用到的函数不会打进产物 |
+| `publishConfig.access: public` | scoped 包需要显式声明公开 |
+
+### 常见问题
+
+- 版本号重复：每个版本号只能发布一次，删除后也不能复用，需要升版本号
+- 包名被占用：换一个名字，或加 scope
+- 发布私有包：去掉 `publishConfig.access: public`，默认发布为私有包，需要 npm 付费账号
+
+## 新增工具函数
+
+1. 在对应模块目录新建文件或添加到现有文件
+2. 在 [src/index.ts](packages/utils/src/index.ts) 中导出
+3. 在 [test/index.test.ts](packages/utils/test/index.test.ts) 中补充测试用例
+4. 运行 `pnpm test` 验证
+
+## 技术栈
+
+- pnpm workspace：Monorepo 多包管理
+- Vite 库模式：构建 ESM、CJS、UMD 三种格式产物
+- TypeScript：严格模式 + 自动生成类型声明
+- Vitest：单元测试
+- vite-plugin-dts：打包时自动生成 .d.ts 声明文件
