@@ -3,9 +3,10 @@ name: CI
 
 # 定义什么时候触发这个工作流
 on:
-  # 当代码被推送时触发
+  # 任意分支推送时触发，用于验证分支代码
   push:
-    # 只监听 main 分支的推送
+  # 创建或更新指向 main 的 Pull Request 时触发
+  pull_request:
     branches:
       - main
   # 允许在 Actions 页面手动运行
@@ -73,6 +74,11 @@ jobs:
         # frozen-lockfile 要求锁文件与 package.json 保持一致
         run: pnpm install --frozen-lockfile
 
+      # 检查 TypeScript 语法和类型
+      - name: Type check
+        # 运行 packages/utils 的 tsc --noEmit，不生成文件
+        run: pnpm typecheck
+
       # 执行 packages/utils 中的单元测试
       - name: Run tests
         # 调用根 package.json 中的 test 脚本
@@ -94,6 +100,8 @@ jobs:
 
       # 初始化或检查 GitHub Pages 配置
       - name: Configure GitHub Pages
+        # 只有 main 分支的推送才部署正式文档站点
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         # 使用 GitHub 官方 Pages 配置 Action
         uses: actions/configure-pages@v5
         # 配置 Action 的参数
@@ -103,6 +111,8 @@ jobs:
 
       # 把构建后的文档目录上传为 Pages 专用产物
       - name: Upload Pages artifact
+        # Pull Request 和功能分支只做验证，不发布 Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         # 使用 GitHub Pages 官方产物上传 Action
         uses: actions/upload-pages-artifact@v3
         # 配置需要上传的目录
@@ -112,6 +122,8 @@ jobs:
 
       # 将 Pages 产物发布到 GitHub Pages
       - name: Deploy to GitHub Pages
+        # 只在 main 分支推送且前面步骤成功时部署
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         # 给这一步命名，供 environment.url 引用部署地址
         id: deployment
         # 使用 GitHub 官方 Pages 部署 Action

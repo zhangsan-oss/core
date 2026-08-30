@@ -6,6 +6,7 @@
   "scripts": {
     "build": "pnpm -r --filter @core/utils build",
     "test": "pnpm -r --filter @core/utils test",
+    "typecheck": "pnpm -r --filter @core/utils typecheck",
     "publish:utils": "pnpm --filter @core/utils publish",
     "release": "pnpm build && pnpm publish:utils",
     "version:patch": "pnpm --filter @core/utils version patch --no-git-tag-version",
