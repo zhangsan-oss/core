@@ -1,10 +1,19 @@
 stages:
-  - test
+  - docs
 
-test-job:
-  stage: test
+
+docs-build:
+
+  stage: docs
+
   tags:
     - docker
+
+
   script:
-    - echo "Hello GitLab CI"
-    - echo "CI Running"
+
+    - echo "start docs"
+
+    - corepack enable
+
+    - pnpm -v
