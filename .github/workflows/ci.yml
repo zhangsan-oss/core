@@ -1,63 +1,118 @@
+# 工作流在 GitHub Actions 页面显示的名称
 name: CI
 
+# 定义什么时候触发这个工作流
 on:
+  # 当代码被推送时触发
   push:
+    # 只监听 main 分支的推送
     branches:
       - main
+  # 允许在 Actions 页面手动运行
   workflow_dispatch:
 
+# 为整个工作流声明 GITHUB_TOKEN 所需的权限
 permissions:
+  # 允许读取仓库代码
   contents: read
+  # 允许上传和发布 GitHub Pages
   pages: write
+  # 允许 Pages 使用 OIDC 身份令牌完成部署
   id-token: write
 
+# 控制同一工作流并发运行时的行为
+concurrency:
+  # 为 Pages 部署使用固定的并发组名称
+  group: github-pages
+  # 新运行开始时取消仍在运行的旧运行
+  cancel-in-progress: true
+
+# 定义工作流中的任务集合
 jobs:
+  # 定义名为 verify 的任务
   verify:
+    # 使用 GitHub 提供的 Ubuntu 云端 Runner
     runs-on: ubuntu-latest
 
+    # 为这个任务关联 GitHub Pages 环境
     environment:
+      # 环境名称，部署记录会显示在这里
       name: github-pages
+      # 部署成功后在环境页面显示实际站点地址
       url: ${{ steps.deployment.outputs.page_url }}
 
+    # 定义任务要按顺序执行的步骤
     steps:
+      # 将当前仓库代码下载到 Runner
       - name: Checkout
+        # 使用官方 Checkout Action，v5 使用 Node.js 24 运行
         uses: actions/checkout@v5
 
+      # 安装 pnpm 包管理器
       - name: Setup pnpm
+        # 使用 pnpm 官方 Action
         uses: pnpm/action-setup@v4
+        # 配置 Action 的参数
         with:
+          # 使用项目 package.json 中指定的 pnpm 版本
           version: 11.24.0
 
+      # 安装 Node.js 运行环境
       - name: Setup Node.js
+        # 使用 GitHub 官方 Node.js 配置 Action
         uses: actions/setup-node@v5
+        # 配置 Node.js Action 的参数
         with:
+          # 指定 Node.js 主版本
           node-version: 24
+          # 启用 pnpm 依赖缓存，加快后续运行
           cache: pnpm
 
+      # 安装项目依赖
       - name: Install dependencies
+        # frozen-lockfile 要求锁文件与 package.json 保持一致
         run: pnpm install --frozen-lockfile
 
+      # 执行 packages/utils 中的单元测试
       - name: Run tests
+        # 调用根 package.json 中的 test 脚本
         run: pnpm test
 
+      # 构建工具库发布产物
       - name: Build package
+        # 调用根 package.json 中的 build 脚本
         run: pnpm build
 
+      # 构建 VitePress 文档网站
       - name: Build documentation
+        # 输出目录为 docs/.vitepress/dist
         run: pnpm docs:build
+        # 为 VitePress 提供 GitHub Pages 的项目路径
         env:
+          # 当前仓库名会对应 GitHub Pages 的项目子路径
           CI_PAGES_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
 
+      # 初始化或检查 GitHub Pages 配置
       - name: Configure GitHub Pages
+        # 使用 GitHub 官方 Pages 配置 Action
         uses: actions/configure-pages@v5
+        # 配置 Action 的参数
         with:
+          # 如果仓库尚未启用 Pages，则尝试自动启用
           enablement: true
 
+      # 把构建后的文档目录上传为 Pages 专用产物
       - name: Upload Pages artifact
+        # 使用 GitHub Pages 官方产物上传 Action
         uses: actions/upload-pages-artifact@v3
+        # 配置需要上传的目录
         with:
+          # VitePress 生成的静态网站目录
           path: docs/.vitepress/dist
 
+      # 将 Pages 产物发布到 GitHub Pages
       - name: Deploy to GitHub Pages
+        # 给这一步命名，供 environment.url 引用部署地址
         id: deployment
+        # 使用 GitHub 官方 Pages 部署 Action
         uses: actions/deploy-pages@v4
